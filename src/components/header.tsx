@@ -11,7 +11,7 @@ export default function Header() {
 		return (
 			<>
 				<Button variant="ghost" className="!text-base">
-					<img src={user.photoURL} alt={user.displayName} className="size-6" />
+					<img src={user.photoURL} alt={user.displayName} className="size-6 rounded-full" />
 					{user.displayName}
 				</Button>
 
