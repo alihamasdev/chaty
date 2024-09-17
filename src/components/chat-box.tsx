@@ -1,3 +1,5 @@
+import Message from "./message";
+import { AnimatePresence } from "framer-motion";
 import { useAuth } from "../context/auth-context";
 import { useChat } from "../context/chat-context";
 
@@ -21,11 +23,13 @@ export default function ChatBox() {
 		);
 	}
 
-	return messages.map((item) => {
-		return (
-			<section className="flex size-full h-dvh flex-col-reverse gap-4 overflow-y-auto overflow-x-hidden rounded-xl bg-zinc-800 px-2 py-4 md:p-4">
-				{/* Message component here */}
-			</section>
-		);
-	});
+	return (
+		<section className="flex size-full h-dvh flex-col-reverse gap-4 overflow-y-auto overflow-x-hidden rounded-xl bg-zinc-800 px-4 py-4 md:px-6">
+			<AnimatePresence>
+				{messages.map((item) => {
+					return <Message key={item.id} data={item} isUser={item.uid === user?.uid} />;
+				})}
+			</AnimatePresence>
+		</section>
+	);
 }
