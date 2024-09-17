@@ -1,9 +1,11 @@
 import Button from "./ui/button";
-import { useEffect, useState } from "react";
 import { useAuth } from "../context/auth-context";
+import { useChat } from "../context/chat-context";
+import { useEffect, useState, type FormEvent } from "react";
 
 export default function Form() {
 	const { user } = useAuth();
+	const { sendMessage } = useChat();
 	const [formValue, setFormValue] = useState("");
 	const [isSending, setIsSending] = useState(false);
 
@@ -11,11 +13,21 @@ export default function Form() {
 		!user && setFormValue("");
 	}, [user]);
 
+	const handleSubmit = (e: FormEvent) => {
+		e.preventDefault();
+		if (user) {
+			setIsSending(true);
+			sendMessage(formValue, user);
+			setFormValue("");
+			setIsSending(false);
+		}
+	};
+
 	return (
-		<form className="flex w-full items-center gap-3">
+		<form className="flex w-full items-center gap-3" onSubmit={handleSubmit}>
 			<input
 				type="text"
-				disabled={!user && true}
+				disabled={!user || isSending}
 				value={user ? formValue : ""}
 				onChange={(e) => setFormValue(e.target.value)}
 				placeholder={user ? "Send a message" : "Sign in to send a message"}
