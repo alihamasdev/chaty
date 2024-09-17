@@ -8,9 +8,7 @@ export default function App() {
 			<header className="relative flex items-center justify-between">
 				<Header />
 			</header>
-			<section className="flex size-full h-dvh flex-col-reverse gap-4 overflow-y-auto overflow-x-hidden rounded-xl bg-zinc-800 px-2 py-4 md:p-4">
-				<ChatBox />
-			</section>
+			<ChatBox />
 			<section className="w-full">
 				<Form />
 			</section>
