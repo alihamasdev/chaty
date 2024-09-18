@@ -1,4 +1,4 @@
-import { zinc, red, black } from "tailwindcss/colors";
+import { zinc, red, black, blue, transparent } from "tailwindcss/colors";
 const defaultTheme = require("tailwindcss/defaultTheme");
 
 export default {
@@ -7,7 +7,10 @@ export default {
 		colors: {
 			zinc,
 			red,
-			black
+			black,
+			blue,
+			transparent,
+			message: "rgb(9 9 11 / 0.65)"
 		},
 		extend: {
 			fontFamily: {
