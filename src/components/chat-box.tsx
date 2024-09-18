@@ -24,7 +24,7 @@ export default function ChatBox() {
 	}
 
 	return (
-		<section className="flex size-full h-dvh flex-col-reverse gap-4 overflow-y-auto overflow-x-hidden rounded-xl bg-zinc-800 px-4 py-4 md:px-6">
+		<section className="flex size-full h-dvh flex-col-reverse gap-4 overflow-y-auto overflow-x-hidden rounded-xl bg-zinc-800 px-2 py-4 md:px-6">
 			<AnimatePresence>
 				{messages.map((item) => {
 					return <Message key={item.id} data={item} isUser={item.uid === user?.uid} />;
