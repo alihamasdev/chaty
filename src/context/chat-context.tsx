@@ -2,12 +2,14 @@ import type { ReactNode } from "react";
 import type { User } from "./auth-context";
 
 import { db } from "../firebase/config";
+import { collection, addDoc } from "firebase/firestore";
+import { query, orderBy, onSnapshot } from "firebase/firestore";
 import { createContext, useContext, useState, useEffect } from "react";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 
 export interface Message extends User {
 	id: string;
 	message: string;
+	createdAt: number;
 }
 interface ChatContextType {
 	loading: boolean;
@@ -28,17 +30,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 	const messagesRef = collection(db, "messages");
 
 	useEffect(() => {
-		setLoading(false);
+		const messageQuery = query(messagesRef, orderBy("createdAt", "desc"));
+		onSnapshot(messageQuery, (snapShot) => {
+			const newMessage = snapShot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Message[];
+			console.log(newMessage);
+			setMessages(newMessage);
+			setLoading(false);
+		});
 	}, []);
 
 	const sendMessage = (message: string, user: User) => {
 		try {
-			const newMessage = { id: String(Date.now()), message, ...user };
-			setMessages((prevState) => [newMessage, ...prevState]);
 			addDoc(messagesRef, {
 				message,
 				...user,
-				createdAt: serverTimestamp()
+				createdAt: Date.now()
 			});
 		} catch (error) {
 			console.log("Error occurred on sending message", error);
