@@ -2,6 +2,7 @@ import type { Message } from "../context/chat-context";
 
 import clsx from "clsx";
 import { motion } from "framer-motion";
+import Options from "./message-options";
 import useDate from "../hooks/date-formatter";
 import useFormat from "../hooks/text-formatter";
 
@@ -36,22 +37,28 @@ export default function Message({ data, isUser }: { data: Message; isUser: boole
 				loading="lazy"
 				src={data.photoURL}
 				alt={data.displayName}
+				title={data.displayName}
 				className="mt-0.5 size-8 rounded-full bg-zinc-950 md:size-10"
 			/>
-			<div className="relative flex flex-col rounded-lg bg-zinc-950 px-4 py-2">
-				<div className="flex w-full items-center gap-2">
-					<p className="truncate text-sm font-semibold text-zinc-200 md:text-base">
-						{data.displayName}
-					</p>
-					<p className="line-clamp-1 text-xs text-zinc-400 md:text-sm">{useDate(data.createdAt)}</p>
+			<div className="group/message flex flex-row items-center gap-1 md:gap-4">
+				{isUser && <Options id={data.id} />}
+				<div className="bg-message relative flex flex-col rounded-lg px-4 py-2">
+					<div className="flex w-full items-center gap-2">
+						<p className="truncate text-sm font-semibold text-zinc-200 md:text-base">
+							{data.displayName}
+						</p>
+						<p className="line-clamp-1 text-xs text-zinc-400 md:text-sm">
+							{useDate(data.createdAt)}
+						</p>
+					</div>
+					<p className="mt-1 text-sm text-zinc-300 md:text-base">{useFormat(data.message)}</p>
+					<span
+						className={clsx(
+							"border-r-message border-t-message border-transparent absolute top-0 border-8",
+							isUser ? "-right-2 -rotate-90" : "-left-2"
+						)}
+					/>
 				</div>
-				<p className="mt-1 text-sm text-zinc-100 md:text-base">{useFormat(data.message)}</p>
-				<span
-					className={clsx(
-						"absolute top-0 border-8 border-black/0 border-r-zinc-950 border-t-zinc-950",
-						isUser ? "-right-2 -rotate-90" : "-left-2"
-					)}
-				/>
 			</div>
 		</motion.article>
 	);

@@ -2,9 +2,9 @@ import type { ReactNode } from "react";
 import type { User } from "./auth-context";
 
 import { db } from "../firebase/config";
-import { collection, addDoc } from "firebase/firestore";
-import { query, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, addDoc, doc } from "firebase/firestore";
 import { createContext, useContext, useState, useEffect } from "react";
+import { query, orderBy, onSnapshot, deleteDoc } from "firebase/firestore";
 
 export interface Message extends User {
 	id: string;
@@ -15,12 +15,14 @@ interface ChatContextType {
 	loading: boolean;
 	messages: Message[];
 	sendMessage: (message: string, user: User) => void;
+	deleteMessage: (messageId: string) => void;
 }
 
 const ChatContext = createContext<ChatContextType>({
 	loading: true,
 	messages: [],
-	sendMessage: () => {}
+	sendMessage: () => {},
+	deleteMessage: () => {}
 });
 
 export function ChatProvider({ children }: { children: ReactNode }) {
@@ -51,7 +53,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 		}
 	};
 
-	const contextValue = { loading, messages, sendMessage };
+	const deleteMessage = (messageId: string) => {
+		console.log(messageId);
+		deleteDoc(doc(db, "messages", messageId));
+	};
+
+	const contextValue = { loading, messages, sendMessage, deleteMessage };
 
 	return <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>;
 }
