@@ -9,9 +9,5 @@ export default function useFormat(content: string) {
 			</a>
 		);
 	};
-	return (
-		<Linkify tagName="p" options={{ render: renderLink }}>
-			{content}
-		</Linkify>
-	);
+	return <Linkify options={{ render: renderLink }}>{content}</Linkify>;
 }
