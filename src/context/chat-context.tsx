@@ -16,7 +16,7 @@ interface ChatContextType {
 	loading: boolean;
 	messages: Message[];
 	isEditing: null | { id: string; message: string };
-	sendMessage: (message: string, user: User) => void;
+	sendMessage: (message: string, user: User) => void | Promise<void>;
 	editMessage: (id: string, message: string) => void | Promise<void>;
 	deleteMessage: (messageId: string) => void;
 	startEdit: (id: string, message: string) => void;
@@ -45,13 +45,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 		const messageQuery = query(messagesRef, orderBy("createdAt", "desc"));
 		onSnapshot(messageQuery, (snapShot) => {
 			const newMessage = snapShot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Message[];
-			console.log(newMessage);
 			setMessages(newMessage);
 			setLoading(false);
 		});
 	}, []);
 
-	const sendMessage = (message: string, user: User) => {
+	const sendMessage = async (message: string, user: User) => {
 		try {
 			addDoc(messagesRef, {
 				message,
@@ -85,8 +84,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 	};
 
 	const deleteMessage = (messageId: string) => {
-		console.log(messageId);
-		deleteDoc(doc(db, "messages", messageId));
+		try {
+			const docRef = doc(db, "messages", messageId);
+			deleteDoc(docRef);
+		} catch (error) {
+			console.log("error occurred on deleting message");
+		}
 	};
 
 	const contextValue = {
