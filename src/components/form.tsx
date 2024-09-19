@@ -5,7 +5,8 @@ import { useEffect, useState, type FormEvent } from "react";
 
 export default function Form() {
 	const { user } = useAuth();
-	const { sendMessage } = useChat();
+	const { sendMessage, isEditing, editMessage } = useChat();
+
 	const [formValue, setFormValue] = useState("");
 	const [isSending, setIsSending] = useState(false);
 
@@ -13,25 +14,29 @@ export default function Form() {
 		!user && setFormValue("");
 	}, [user]);
 
-	const handleSubmit = (e: FormEvent) => {
+	useEffect(() => {
+		isEditing ? setFormValue(isEditing.message) : setFormValue("");
+	}, [isEditing]);
+
+	const handleSubmit = async (e: FormEvent) => {
 		e.preventDefault();
+		setIsSending(true);
 		if (user) {
-			setIsSending(true);
-			sendMessage(formValue, user);
-			setFormValue("");
-			setIsSending(false);
+			isEditing ? await editMessage(isEditing.id, formValue) : sendMessage(formValue, user);
 		}
+		setFormValue("");
+		setIsSending(false);
 	};
 
 	return (
 		<form className="flex w-full items-center gap-3" onSubmit={handleSubmit}>
 			<input
 				type="text"
+				value={formValue}
 				disabled={!user || isSending}
-				value={user ? formValue : ""}
 				onChange={(e) => setFormValue(e.target.value)}
 				placeholder={user ? "Send a message" : "Sign in to send a message"}
-				className="h-10 w-full rounded-lg bg-zinc-800 px-3 py-2 text-zinc-300 outline-0 transition-colors placeholder:text-zinc-500 focus:text-zinc-50 disabled:opacity-70"
+				className="h-10 w-full rounded-lg bg-zinc-800 px-3 py-2 text-sm text-zinc-300 outline-0 transition-colors placeholder:text-zinc-500 focus:text-zinc-50 disabled:opacity-70 md:text-base"
 			/>
 			<Button size="icon" disabled={!user || formValue.length === 0 || isSending}>
 				<svg viewBox="0 0 24 24" className="size-4 fill-zinc-50">

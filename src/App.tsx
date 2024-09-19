@@ -1,6 +1,7 @@
 import Form from "./components/form";
 import Header from "./components/header";
 import ChatBox from "./components/chat-box";
+import Edit from "./components/edit-indicator";
 
 export default function App() {
 	return (
@@ -9,6 +10,7 @@ export default function App() {
 				<Header />
 			</header>
 			<ChatBox />
+			<Edit />
 			<section className="w-full">
 				<Form />
 			</section>
