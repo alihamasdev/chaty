@@ -1,5 +1,5 @@
 import Message from "./message";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "motion/react";
 import { useAuth } from "../context/auth-context";
 import { useChat } from "../context/chat-context";
 

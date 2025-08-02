@@ -10,12 +10,12 @@ export default function Header() {
 	if (user) {
 		return (
 			<>
-				<Button variant="ghost" className="!text-base">
+				<Button variant="ghost" className="text-base!">
 					<img src={user.photoURL} alt={user.displayName} className="size-6 rounded-full" />
 					{user.displayName}
 				</Button>
 
-				<Button className="hover:!bg-red-500/20 hover:!text-red-500" onClick={logoutUser}>
+				<Button className="hover:bg-red-500/20! hover:text-red-500!" onClick={logoutUser}>
 					<FontAwesomeIcon icon={faRightFromBracket} className="text-base" />
 					Logout
 				</Button>

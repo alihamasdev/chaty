@@ -1,7 +1,7 @@
 import type { Message } from "../context/chat-context";
 
 import clsx from "clsx";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import Options from "./message-options";
 import useDate from "../hooks/date-formatter";
 import useFormat from "../hooks/text-formatter";

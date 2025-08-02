@@ -1,6 +1,6 @@
 import cn from "clsx";
 import { type ButtonHTMLAttributes } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react";
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 	variant?: "default" | "ghost";
