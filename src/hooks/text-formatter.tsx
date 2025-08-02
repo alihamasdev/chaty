@@ -4,7 +4,7 @@ export default function useFormat(content: string) {
 	const renderLink = ({ attributes, content }: { attributes: any; content: any }) => {
 		const { href, ...props } = attributes;
 		return (
-			<a href={href} target="_blank" className="text-[#60a5fa] hover:underline" {...props}>
+			<a href={href} target="_blank" className="text-blue-400 hover:underline" {...props}>
 				{content}
 			</a>
 		);
