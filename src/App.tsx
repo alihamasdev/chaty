@@ -11,9 +11,7 @@ export default function App() {
 			</header>
 			<ChatBox />
 			<Edit />
-			<section className="w-full">
-				<Form />
-			</section>
+			<Form />
 		</main>
 	);
 }

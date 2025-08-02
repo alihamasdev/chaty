@@ -14,7 +14,7 @@ export default function Header() {
 				</Button>
 
 				<Button className="hover:bg-red-500/20! hover:text-red-500!" onClick={logoutUser}>
-					<LogOut className="text-base" />
+					<LogOut className="size-4.5" />
 					Logout
 				</Button>
 			</>

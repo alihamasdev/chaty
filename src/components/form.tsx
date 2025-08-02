@@ -30,13 +30,12 @@ export default function Form() {
 
 	return (
 		<form className="flex w-full items-center gap-3" onSubmit={handleSubmit}>
-			<input
-				type="text"
+			<textarea
 				value={formValue}
 				disabled={!user || isSending}
 				onChange={(e) => setFormValue(e.target.value)}
 				placeholder={user ? "Send a message" : "Sign in to send a message"}
-				className="h-10 w-full rounded-lg bg-zinc-800 px-3 py-2 text-sm text-zinc-300 outline-0 transition-colors placeholder:text-zinc-500 focus:text-zinc-50 disabled:opacity-70 md:text-base"
+				className="field-sizing-content max-h-80 min-h-10 w-full resize-none rounded-lg bg-zinc-800 px-3 py-2 text-sm text-zinc-300 outline-0 transition-colors placeholder:text-zinc-500 focus:text-zinc-50 disabled:opacity-70 md:text-base"
 			/>
 			<Button size="icon" disabled={!user || formValue.length === 0 || isSending}>
 				<svg viewBox="0 0 24 24" className="size-4 fill-zinc-50">
