@@ -1,7 +1,7 @@
-import Form from "./components/form";
-import Header from "./components/header";
-import ChatBox from "./components/chat-box";
-import Edit from "./components/edit-indicator";
+import ChatBox from "@/components/chat-box";
+import Edit from "@/components/edit-indicator";
+import Form from "@/components/form";
+import Header from "@/components/header";
 
 export default function App() {
 	return (
