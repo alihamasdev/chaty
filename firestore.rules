@@ -7,17 +7,29 @@ service cloud.firestore {
     // Assumed Data Model
     // ===============================================================
     //
+    // Collection: users
+    // Document ID: userId (must match Firebase Auth UID)
+    //
+    // Fields:
+    //   - uid: string (required, 1-128 characters, immutable) - Firebase Auth UID
+    //   - displayName: string | null (optional/nullable, 0-100 characters) - User's display name
+    //   - photoURL: string | null (optional/nullable, 0-2048 characters, valid URL or empty) - Avatar URL
+    //   - updatedAt: number (required, positive integer/float in ms) - Last profile sync timestamp
+    //
+    // ---------------------------------------------------------------
+    //
     // Collection: messages
     // Document ID: auto-generated string (e.g. 20-character Firestore ID)
     //
     // Fields:
-    //   - message: string (required, 1-1000 characters) - The chat message content
     //   - uid: string (required, 1-128 characters, immutable) - Firebase Auth UID of the author
-    //   - displayName: string (required, 1-100 characters, immutable) - Author's display name
-    //   - photoURL: string (required, 0-2048 characters, immutable, valid URL or empty) - Author's avatar URL
+    //   - message: string (required, 1-1000 characters) - The chat message content
     //   - createdAt: number (required, positive integer/float in ms, immutable) - Message creation timestamp
     //   - editedAt: number (optional, positive integer/float in ms, >= createdAt) - Message last edited timestamp
     //   - id: string (optional, 1-128 characters, immutable) - Document ID if included in payload
+    //   - Legacy fields (supported on existing documents during migration):
+    //     - displayName: string | null (optional/nullable, 0-100 characters)
+    //     - photoURL: string | null (optional/nullable, 0-2048 characters)
     //
     // ===============================================================
 
@@ -28,6 +40,11 @@ service cloud.firestore {
     // Check if the user is authenticated with Firebase Auth
     function isAuthenticated() {
       return request.auth != null;
+    }
+
+    // Check if user owns the resource by matching auth UID with userId
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
 
     // Check if user is the author/owner based on the document's uid field
@@ -52,12 +69,26 @@ service cloud.firestore {
     }
 
     // ===============================================================
-    // Domain Validator (Validator Function Pattern)
+    // Domain Validators (Validator Function Pattern)
     // ===============================================================
 
-    // Validates full message schema and bounds (used in BOTH create and update)
+    // Validates normalized user profile schema and bounds
+    function isValidUser(data) {
+      return hasOnlyAllowedFields(['uid', 'displayName', 'photoURL', 'updatedAt']) &&
+        hasRequiredFields(['uid', 'updatedAt']) &&
+        data.uid is string &&
+        data.uid.size() >= 1 &&
+        data.uid.size() <= 128 &&
+        (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 2048 && (data.photoURL.size() == 0 || isValidUrl(data.photoURL)))) &&
+        data.updatedAt is number &&
+        data.updatedAt > 0 &&
+        data.updatedAt <= request.time.toMillis() + 300000;
+    }
+
+    // Validates message schema and bounds (used in BOTH create and update)
     function isValidMessage(data) {
-      return hasOnlyAllowedFields(['message', 'uid', 'displayName', 'photoURL', 'createdAt', 'editedAt', 'id']) &&
+      return hasOnlyAllowedFields(['message', 'uid', 'createdAt', 'editedAt', 'id', 'displayName', 'photoURL']) &&
         hasRequiredFields(['message', 'uid', 'createdAt']) &&
         data.message is string &&
         data.message.size() >= 1 &&
@@ -65,12 +96,35 @@ service cloud.firestore {
         data.uid is string &&
         data.uid.size() >= 1 &&
         data.uid.size() <= 128 &&
-        (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
-        (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 2048 && (data.photoURL.size() == 0 || isValidUrl(data.photoURL)))) &&
         data.createdAt is number &&
         data.createdAt > 0 &&
         (!('editedAt' in data) || (data.editedAt is number && data.editedAt > 0 && data.editedAt >= data.createdAt)) &&
-        (!('id' in data) || (data.id is string && data.id.size() >= 1 && data.id.size() <= 128));
+        (!('id' in data) || (data.id is string && data.id.size() >= 1 && data.id.size() <= 128)) &&
+        (!('displayName' in data) || data.displayName == null || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('photoURL' in data) || data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 2048 && (data.photoURL.size() == 0 || isValidUrl(data.photoURL))));
+    }
+
+    // ===============================================================
+    // Collection Rules: users (Normalized Profiles)
+    // ===============================================================
+    match /users/{userId} {
+      // READ: Public access allowed so chat participants and visitors can resolve avatars/names
+      allow read: if true;
+
+      // CREATE: Authenticated user can create their own profile matching auth UID
+      allow create: if isOwner(userId) &&
+        request.resource.data.uid == userId &&
+        isValidUser(request.resource.data);
+
+      // UPDATE: User can update their own profile; UID is strictly immutable
+      allow update: if isOwner(userId) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.uid == userId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'updatedAt']) &&
+        isValidUser(request.resource.data);
+
+      // DELETE: User can delete their own profile doc
+      allow delete: if isOwner(userId);
     }
 
     // ===============================================================
@@ -81,14 +135,17 @@ service cloud.firestore {
       allow read: if true;
 
       // CREATE: Authenticated users can create messages under their own UID
+      // New messages must strictly adhere to normalized schema (no displayName/photoURL on create)
       allow create: if isAuthenticated() &&
         request.resource.data.uid == request.auth.uid &&
         !('editedAt' in request.resource.data) &&
         (!('id' in request.resource.data) || request.resource.data.id == messageId) &&
         request.resource.data.createdAt <= request.time.toMillis() + 300000 &&
+        hasOnlyAllowedFields(['uid', 'message', 'createdAt', 'editedAt', 'id']) &&
         isValidMessage(request.resource.data);
 
       // UPDATE: Authors can edit only their own messages, modifying only 'message' and 'editedAt'
+      // Preserves backward compatibility for legacy messages that contain displayName/photoURL
       allow update: if isDocOwner() &&
         request.resource.data.uid == resource.data.uid &&
         request.resource.data.createdAt == resource.data.createdAt &&
@@ -103,7 +160,9 @@ service cloud.firestore {
       allow delete: if isDocOwner();
     }
 
+    // ===============================================================
     // Default Deny: Close all other paths by default
+    // ===============================================================
     match /{document=**} {
       allow read, write: if false;
     }

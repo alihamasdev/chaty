@@ -1,6 +1,7 @@
+import { SendHorizontalIcon } from "lucide-react";
 import { useState } from "react";
 
-import Button from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { useChat } from "@/context/chat-context";
 
@@ -58,20 +59,26 @@ export default function Form() {
 	};
 
 	return (
-		<form className="flex w-full items-center gap-3" onSubmit={handleSubmit}>
+		<form className="flex w-full items-end gap-2 px-2 md:px-4" onSubmit={handleSubmit}>
 			<textarea
 				value={formValue}
 				disabled={!user}
 				onChange={(e) => setFormValue(e.target.value)}
 				onKeyDown={handleKeyDown}
 				aria-label="Message input"
+				rows={1}
 				placeholder={user ? "Send a message" : "Sign in to send a message"}
-				className="field-sizing-content max-h-80 min-h-10 w-full resize-none rounded-lg bg-zinc-800 px-3 py-2 text-sm text-zinc-300 outline-0 transition-colors placeholder:text-zinc-500 focus:text-zinc-50 disabled:opacity-70 md:text-base"
+				className="field-sizing-content h-9 max-h-72 min-h-9 w-full resize-none rounded-lg border border-input bg-muted/40 px-3 py-1.5 text-base leading-5 text-foreground transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-1 focus-visible:ring-ring/50 disabled:opacity-50 md:text-sm"
 			/>
-			<Button size="icon" aria-label="Send message" title="Send message" disabled={!user || formValue.trim().length === 0 || isSending}>
-				<svg viewBox="0 0 24 24" className="size-4 fill-zinc-50">
-					<path d="M1.101,21.757L23.8,12.028L1.101,2.3l0.011,7.912l13.623,1.816L1.112,13.845 L1.101,21.757z" />
-				</svg>
+			<Button
+				type="submit"
+				size="icon"
+				className="shrink-0"
+				aria-label="Send message"
+				title="Send message"
+				disabled={!user || formValue.trim().length === 0 || isSending}
+			>
+				<SendHorizontalIcon className="size-4" />
 			</Button>
 		</form>
 	);

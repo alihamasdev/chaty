@@ -1,22 +1,31 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { ENV } from "varlock/env";
 
-const config = {
-	appId: import.meta.env.VITE_FIREBASE_APP_ID,
-	apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-	projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-	authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-	storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-	messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+const requiredConfig = {
+	appId: ENV.VITE_FIREBASE_APP_ID || import.meta.env.VITE_FIREBASE_APP_ID,
+	apiKey: ENV.VITE_FIREBASE_API_KEY || import.meta.env.VITE_FIREBASE_API_KEY,
+	projectId: ENV.VITE_FIREBASE_PROJECT_ID || import.meta.env.VITE_FIREBASE_PROJECT_ID,
+	authDomain: ENV.VITE_FIREBASE_AUTH_DOMAIN || import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+	storageBucket: ENV.VITE_FIREBASE_STORAGE_BUCKET || import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+	messagingSenderId: ENV.VITE_FIREBASE_MESSAGING_SENDER_ID || import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
 };
 
-if (!config.apiKey || !config.projectId) {
-	console.error(
-		"⚠️ Firebase configuration is missing! Please make sure you have created a .env file with your VITE_FIREBASE_* credentials (refer to .env.example).",
-	);
+const missing = Object.entries(requiredConfig)
+	.filter(([, value]) => !value || value.trim().length === 0)
+	.map(([key]) => key);
+
+if (missing.length > 0) {
+	const message = `[Varlock] Missing required Firebase environment variables: ${missing.join(", ")}. The application cannot start without valid configuration.`;
+	console.error(message);
+	throw new Error(message);
 }
 
-export const app = initializeApp(config);
-export const db = getFirestore(app);
+export const app = initializeApp(requiredConfig);
+
 export const auth = getAuth(app);
+
+export const db = initializeFirestore(app, {
+	localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+});

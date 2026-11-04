@@ -1,4 +1,5 @@
 import tailwindcss from "@tailwindcss/vite";
+import { varlockVitePlugin } from "@varlock/vite-integration";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 import { defineConfig } from "vite";
@@ -13,7 +14,7 @@ export default defineConfig({
 			"@": path.resolve(import.meta.dirname, "./src"),
 		},
 	},
-	plugins: [tailwindcss(), react()],
+	plugins: [varlockVitePlugin(), tailwindcss(), react()],
 	build: {
 		chunkSizeWarningLimit: 600,
 		rollupOptions: {

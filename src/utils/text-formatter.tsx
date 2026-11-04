@@ -9,7 +9,13 @@ export function formatText(content: string) {
 	const renderLink = ({ attributes, content }: RenderLinkProps) => {
 		const { href, ...props } = attributes;
 		return (
-			<a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline" {...props}>
+			<a
+				href={href}
+				target="_blank"
+				rel="noopener noreferrer"
+				className="text-primary underline underline-offset-4 hover:opacity-80"
+				{...props}
+			>
 				{content}
 			</a>
 		);

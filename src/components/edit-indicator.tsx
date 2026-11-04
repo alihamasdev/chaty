@@ -29,12 +29,12 @@ export default function Edit() {
 					animate={{ opacity: 1, height: "auto", marginBottom: 4 }}
 					exit={{ opacity: 0, height: 0, marginBottom: 0 }}
 					transition={{ duration: 0.18, ease: [0.23, 1, 0.32, 1] }}
-					className="flex items-center gap-2 overflow-hidden text-xs md:gap-3 md:text-sm"
+					className="flex items-center gap-2 overflow-hidden px-2 text-xs md:gap-3 md:px-4 md:text-sm"
 				>
-					<div className="font-semibold text-zinc-50">Editing Mode</div>
-					<div className="h-3 border-r border-zinc-500" />
-					<div>
-						<button className="cursor-pointer text-blue-400 hover:underline" onClick={cancelEdit}>
+					<div className="font-semibold text-foreground">Editing Mode</div>
+					<div className="h-3 border-r border-border" />
+					<div className="text-muted-foreground">
+						<button className="cursor-pointer font-medium text-primary hover:underline" onClick={cancelEdit}>
 							escape
 						</button>{" "}
 						to cancel

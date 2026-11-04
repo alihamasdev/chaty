@@ -10,19 +10,25 @@ import {
 	limit,
 	startAfter,
 	getDocs,
+	where,
+	documentId,
 	type QueryDocumentSnapshot,
 	type DocumentData,
 } from "firebase/firestore";
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 
-import { type User } from "@/context/auth-context";
+import { useAuth, type User } from "@/context/auth-context";
 import { db } from "@/firebase/config";
 
-export type Message = User & {
+export type Message = {
 	id: string;
+	uid: string;
 	message: string;
 	createdAt: number;
 	editedAt?: number;
+	// Legacy fallback fields for backward compatibility with older messages
+	displayName?: string | null;
+	photoURL?: string | null;
 };
 
 type ChatContextType = {
@@ -38,6 +44,8 @@ type ChatContextType = {
 	deleteMessage: (messageId: string) => Promise<void>;
 	startEdit: (id: string, message: string) => void;
 	cancelEdit: () => void;
+	userProfiles: Record<string, User>;
+	getUserProfile: (uid: string) => User | undefined;
 };
 
 const ChatContext = createContext<ChatContextType>({
@@ -53,6 +61,8 @@ const ChatContext = createContext<ChatContextType>({
 	deleteMessage: async () => {},
 	startEdit: () => {},
 	cancelEdit: () => {},
+	userProfiles: {},
+	getUserProfile: () => undefined,
 });
 
 function parseDocToMessage(docSnapshot: QueryDocumentSnapshot<DocumentData>): Message {
@@ -73,10 +83,13 @@ function parseDocToMessage(docSnapshot: QueryDocumentSnapshot<DocumentData>): Me
 
 	return {
 		id: docSnapshot.id,
-		...data,
+		uid: data.uid,
+		message: data.message,
+		displayName: data.displayName,
+		photoURL: data.photoURL,
 		createdAt: typeof createdAt === "number" ? createdAt : Date.now(),
 		editedAt: typeof editedAt === "number" ? editedAt : undefined,
-	} as Message;
+	};
 }
 
 function getTimestamp(): number {
@@ -84,6 +97,7 @@ function getTimestamp(): number {
 }
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
+	const { user } = useAuth();
 	const [loading, setLoading] = useState(true);
 	const [loadingMore, setLoadingMore] = useState(false);
 	const [hasMore, setHasMore] = useState(true);
@@ -92,6 +106,64 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 	const [realtimeMessages, setRealtimeMessages] = useState<Message[]>([]);
 	const [olderMessages, setOlderMessages] = useState<Message[]>([]);
 	const [isEditing, setIsEditing] = useState<null | { id: string; message: string }>(null);
+	const [userProfiles, setUserProfiles] = useState<Record<string, User>>({});
+	const fetchedUidsRef = useRef<Set<string>>(new Set());
+
+	// Fetch user profiles for any messages whose authors aren't cached yet
+	useEffect(() => {
+		const allUids = new Set<string>();
+		for (const m of realtimeMessages) {
+			if (m.uid) allUids.add(m.uid);
+		}
+		for (const m of olderMessages) {
+			if (m.uid) allUids.add(m.uid);
+		}
+
+		const missingUids: string[] = [];
+		for (const uid of allUids) {
+			if (user?.uid === uid) continue;
+			if (!fetchedUidsRef.current.has(uid)) {
+				missingUids.push(uid);
+				fetchedUidsRef.current.add(uid);
+			}
+		}
+
+		if (missingUids.length === 0) return;
+
+		const fetchProfiles = async () => {
+			try {
+				// Firestore 'in' query supports at most 30 items per query
+				const chunks: string[][] = [];
+				for (let i = 0; i < missingUids.length; i += 30) {
+					chunks.push(missingUids.slice(i, i + 30));
+				}
+
+				const newProfiles: Record<string, User> = {};
+				await Promise.all(
+					chunks.map(async (chunk) => {
+						const usersQuery = query(collection(db, "users"), where(documentId(), "in", chunk));
+						const snap = await getDocs(usersQuery);
+						snap.docs.forEach((d) => {
+							const data = d.data();
+							newProfiles[d.id] = {
+								uid: d.id,
+								displayName: data.displayName || "Anonymous",
+								photoURL: data.photoURL || null,
+							};
+						});
+					}),
+				);
+
+				if (Object.keys(newProfiles).length > 0) {
+					setUserProfiles((prev) => ({ ...prev, ...newProfiles }));
+				}
+			} catch (err) {
+				console.error("Failed to fetch user profiles:", err);
+			}
+		};
+
+		fetchProfiles();
+	}, [realtimeMessages, olderMessages, user?.uid]);
 
 	useEffect(() => {
 		const messagesRef = collection(db, "messages");
@@ -167,7 +239,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 		try {
 			const messagesRef = collection(db, "messages");
 			const createdAt = getTimestamp();
-			await addDoc(messagesRef, { message, ...user, createdAt });
+			// Normalized: only store uid, message, and createdAt (no author metadata)
+			await addDoc(messagesRef, { message, uid: user.uid, createdAt });
 		} catch (err) {
 			console.error("Error occurred on sending message:", err);
 			throw err;
@@ -209,6 +282,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 		}
 	};
 
+	const getUserProfile = (uid: string): User | undefined => {
+		if (user && user.uid === uid) {
+			return user;
+		}
+		return userProfiles[uid];
+	};
+
 	const realtimeIds = new Set(realtimeMessages.map((m) => m.id));
 	const messages = [...realtimeMessages, ...olderMessages.filter((m) => !realtimeIds.has(m.id))];
 
@@ -225,6 +305,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 		deleteMessage,
 		startEdit,
 		cancelEdit,
+		userProfiles,
+		getUserProfile,
 	};
 
 	return <ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>;
