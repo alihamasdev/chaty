@@ -1,0 +1,41 @@
+# Version control & OS
+.git
+.gitignore
+.DS_Store
+
+# Editor & IDE files
+.vscode
+.idea
+
+# Local environment and secret files
+.env
+.env*.local
+.env.example
+
+# Dependencies & build outputs
+node_modules
+dist
+dist-ssr
+
+# Firebase configuration & rules (managed via Firebase CLI)
+firebase.json
+.firebaserc
+firestore.rules
+
+# Linting and formatting configs
+.oxlintrc.json
+.oxfmtrc.json
+
+# Scripts & local tools
+scripts
+
+# Documentation
+README.md
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*

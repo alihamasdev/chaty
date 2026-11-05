@@ -235,7 +235,7 @@ function MessageScrollerButton({
 	className,
 	children,
 	...props
-}: React.ComponentProps<typeof motion.button> & { children: React.ReactNode }) {
+}: React.ComponentProps<typeof motion.button> & { children?: React.ReactNode }) {
 	const { scrollToBottom, showScrollButton, unreadCount } = useMessageScroller();
 
 	return (
